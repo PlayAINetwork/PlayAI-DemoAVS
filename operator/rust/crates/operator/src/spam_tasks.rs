@@ -27,8 +27,8 @@ static KEY: Lazy<String> =
 sol!(
     #[allow(missing_docs)]
     #[sol(rpc)]
-    HelloWorldServiceManager,
-    "json_abi/HelloWorldServiceManager.json"
+    PlayAIServiceManager,
+    "json_abi/PlayAIServiceManager.json"
 );
 
 #[allow(unused)]
@@ -54,7 +54,7 @@ async fn create_new_task(task_name: &str) -> Result<()> {
 
     let provider = get_provider_with_wallet(KEY.clone());
     let hello_world_contract =
-        HelloWorldServiceManager::new(hello_world_contract_address, provider);
+        PlayAIServiceManager::new(hello_world_contract_address, provider);
 
     let tx = hello_world_contract
         .createNewTask(task_name.to_string())

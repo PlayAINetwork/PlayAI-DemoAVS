@@ -19,19 +19,19 @@ const contract = new ethers.Contract(contractAddress, contractABI, wallet);
 const registryContract = new ethers.Contract(stakeRegistryAddress, registryABI, wallet);
 const avsDirectory = new ethers.Contract(avsDirectoryAddress, avsDirectoryABI, wallet);
 
-const signAndRespondToTask = async (taskIndex: number, taskCreatedBlock: number, taskName: string) => {
-    const message = `Hello, ${taskName}`;
-    const messageHash = ethers.utils.solidityKeccak256(["string"], [message]);
-    const messageBytes = ethers.utils.arrayify(messageHash);
+const signAndRespondToTask = async (operatorID: any, requestID: any, taskmessage: string) => {
+    //const message = `${requestID}`;
+    //const messageHash = ethers.utils.solidityKeccak256(["string"], [message]);
+    const messageBytes = ethers.utils.arrayify(requestID);
     const signature = await wallet.signMessage(messageBytes);
 
     console.log(
-        `Signing and responding to task ${taskIndex}`
+        `Signing and responding to task with request ID ${requestID} and assigned to ${operatorID}`
     )
 
     const tx = await contract.respondToTask(
-        { name: taskName, taskCreatedBlock: taskCreatedBlock },
-        taskIndex,
+        requestID,
+        "ThisIsCalculatedResponseFromOperator",
         signature
     );
     await tx.wait();
@@ -46,7 +46,7 @@ const registerOperator = async () => {
         stakerOptOutWindowBlocks: 0
     }, "");
     await tx1.wait();
-    console.log("Operator registered on EL successfully");
+    console.log("Operator registered on EL successfully",wallet.address);
 
     const salt = ethers.utils.hexlify(ethers.utils.randomBytes(32));
     const expiry = Math.floor(Date.now() / 1000) + 3600; // Example expiry, 1 hour from now
@@ -78,15 +78,16 @@ const registerOperator = async () => {
         wallet.address
     );
     await tx2.wait();
-    console.log("Operator registered on AVS successfully");
+    console.log("Operator registered on AVS successfully",wallet.address);
 };
 
 const monitorNewTasks = async () => {
-    await contract.createNewTask("EigenWorld");
+    await contract.createNewTask(wallet.address,"ThisIsBackendRequestID");
 
-    contract.on("NewTaskCreated", async (taskIndex: number, task: any) => {
-        console.log(`New task detected: Hello, ${task.name}`);
-        await signAndRespondToTask(taskIndex, task.taskCreatedBlock, task.name);
+    contract.on("RequestCreated", async (operatorID: any, requestID: any, taskmessage:string) => {
+        //console.log("completeTask Info",operatorID,requestID,taskmessage);
+        console.log(`New task detected for Operator, ${operatorID}`);
+        await signAndRespondToTask(operatorID, requestID, taskmessage);
     });
 
     console.log("Monitoring for new tasks...");

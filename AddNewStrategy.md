@@ -46,7 +46,7 @@ address baseStrategyImplementationAddr = /* Strategy Base Implementation Address
 address strategyManagerAddr = /* Strategy Manager Address */;
 address delegationManagerAddr = /* Delegation Manager Address */;
 address avsDirectoryAddr = /* AVS Directory Address */;
-address helloWorldServiceManagerProxyAddr = /* Hello World Service Manager Proxy Address */;
+address PlayAIServiceManagerProxyAddr = /* Hello World Service Manager Proxy Address */;
 address stakeRegistryProxyAddr = /* ECDSA Stake Registry Proxy Address */;
 ```
 
@@ -116,7 +116,7 @@ function _whitelistStrategy(StrategyBaseTVLLimits erc20MockStrategy) internal {
 function _updateHelloWorldAVS(StrategyBaseTVLLimits erc20MockStrategy) internal {
     IDelegationManager delegationManager = IDelegationManager(delegationManagerAddr);
     IAVSDirectory avsDirectory = IAVSDirectory(avsDirectoryAddr);
-    HelloWorldServiceManager helloWorldServiceManagerProxy = HelloWorldServiceManager(helloWorldServiceManagerProxyAddr);
+    PlayAIServiceManager PlayAIServiceManagerProxy = PlayAIServiceManager(PlayAIServiceManagerProxyAddr);
     ECDSAStakeRegistry stakeRegistryProxy = ECDSAStakeRegistry(stakeRegistryProxyAddr);
 
     StrategyParams memory strategyParams = StrategyParams({
@@ -132,7 +132,7 @@ function _updateHelloWorldAVS(StrategyBaseTVLLimits erc20MockStrategy) internal 
     });
 
     stakeRegistryProxy.initialize(
-        address(helloWorldServiceManagerProxy),
+        address(PlayAIServiceManagerProxy),
         1,
         quorum
     );

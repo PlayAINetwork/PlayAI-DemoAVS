@@ -9,7 +9,7 @@ import {IStrategyManager, IStrategy} from "@eigenlayer/contracts/interfaces/IStr
 import {StrategyBase} from "@eigenlayer/contracts/strategies/StrategyBase.sol";
 import {ECDSAStakeRegistry} from "@eigenlayer-middleware/src/unaudited/ECDSAStakeRegistry.sol";
 import {Quorum, StrategyParams} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
-import {HelloWorldServiceManager} from "../src/HelloWorldServiceManager.sol";
+import {PlayAIServiceManager} from "../src/PlayAIServiceManager.sol";
 import "@eigenlayer/test/mocks/EmptyContract.sol";
 import "../src/ERC20Mock.sol";
 import "forge-std/Script.sol";
@@ -30,8 +30,8 @@ contract HoleskyDeployer is Script, Utils {
     ECDSAStakeRegistry public stakeRegistryProxy;
     ECDSAStakeRegistry public stakeRegistryImplementation;
 
-    HelloWorldServiceManager public helloWorldServiceManagerProxy;
-    HelloWorldServiceManager public helloWorldServiceManagerImplementation;
+    PlayAIServiceManager public PlayAIServiceManagerProxy;
+    PlayAIServiceManager public PlayAIServiceManagerImplementation;
 
     function run() external {
         // Manually pasted addresses of Eigenlayer contracts
@@ -87,7 +87,7 @@ contract HoleskyDeployer is Script, Utils {
         EmptyContract emptyContract = new EmptyContract();
 
         // First, deploy upgradeable proxy contracts that will point to the implementations.
-        helloWorldServiceManagerProxy = HelloWorldServiceManager(
+        PlayAIServiceManagerProxy = PlayAIServiceManager(
             address(
                 new TransparentUpgradeableProxy(
                     address(emptyContract),
@@ -142,14 +142,14 @@ contract HoleskyDeployer is Script, Utils {
                 address(stakeRegistryImplementation),
                 abi.encodeWithSelector(
                     ECDSAStakeRegistry.initialize.selector,
-                    address(helloWorldServiceManagerProxy),
+                    address(PlayAIServiceManagerProxy),
                     1,
                     quorum
                 )
             );
         }
 
-        helloWorldServiceManagerImplementation = new HelloWorldServiceManager(
+        PlayAIServiceManagerImplementation = new PlayAIServiceManager(
             address(avsDirectory),
             address(stakeRegistryProxy),
             address(delegationManager)
@@ -157,9 +157,9 @@ contract HoleskyDeployer is Script, Utils {
         // Upgrade the proxy contracts to use the correct implementation contracts and initialize them.
         helloWorldProxyAdmin.upgrade(
             TransparentUpgradeableProxy(
-                payable(address(helloWorldServiceManagerProxy))
+                payable(address(PlayAIServiceManagerProxy))
             ),
-            address(helloWorldServiceManagerImplementation)
+            address(PlayAIServiceManagerImplementation)
         );
 
         // WRITE JSON DATA
@@ -168,13 +168,13 @@ contract HoleskyDeployer is Script, Utils {
         string memory deployed_addresses = "addresses";
         vm.serializeAddress(
             deployed_addresses,
-            "HelloWorldServiceManagerProxy",
-            address(helloWorldServiceManagerProxy)
+            "PlayAIServiceManagerProxy",
+            address(PlayAIServiceManagerProxy)
         );
         vm.serializeAddress(
             deployed_addresses,
-            "HelloWorldServiceManagerImplementation",
-            address(helloWorldServiceManagerImplementation)
+            "PlayAIServiceManagerImplementation",
+            address(PlayAIServiceManagerImplementation)
         );
         vm.serializeAddress(
             deployed_addresses,

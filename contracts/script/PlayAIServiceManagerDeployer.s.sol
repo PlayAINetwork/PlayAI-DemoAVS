@@ -15,7 +15,7 @@ import {ECDSAStakeRegistry} from "@eigenlayer-middleware/src/unaudited/ECDSAStak
 import {Quorum, StrategyParams} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
 import "@eigenlayer-middleware/src/OperatorStateRetriever.sol";
 
-import {HelloWorldServiceManager, IServiceManager} from "../src/HelloWorldServiceManager.sol";
+import {PlayAIServiceManager, IServiceManager} from "../src/PlayAIServiceManager.sol";
 import "../src/ERC20Mock.sol";
 
 import {Utils} from "./utils/Utils.sol";
@@ -26,8 +26,8 @@ import "forge-std/StdJson.sol";
 import "forge-std/console.sol";
 
 // # To deploy and verify our contract
-// forge script script/HelloWorldDeployer.s.sol:HelloWorldDeployer --rpc-url $RPC_URL  --private-key $PRIVATE_KEY --broadcast -vvvv
-contract HelloWorldDeployer is Script, Utils {
+// forge script script/PlayAIServiceManagerDeployer.s.sol:PlayAIServiceManagerDeployer --rpc-url $RPC_URL  --private-key $PRIVATE_KEY --broadcast -vvvv
+contract PlayAIServiceManagerDeployer is Script, Utils {
     // ERC20 and Strategy: we need to deploy this erc20, create a strategy for it, and whitelist this strategy in the strategymanager
 
     ERC20Mock public erc20Mock;
@@ -40,8 +40,8 @@ contract HelloWorldDeployer is Script, Utils {
     ECDSAStakeRegistry public stakeRegistryProxy;
     ECDSAStakeRegistry public stakeRegistryImplementation;
 
-    HelloWorldServiceManager public helloWorldServiceManagerProxy;
-    HelloWorldServiceManager public helloWorldServiceManagerImplementation;
+    PlayAIServiceManager public PlayAIServiceManagerProxy;
+    PlayAIServiceManager public PlayAIServiceManagerImplementation;
 
     function run() external {
         // Eigenlayer contracts
@@ -173,7 +173,7 @@ contract HelloWorldDeployer is Script, Utils {
          * First, deploy upgradeable proxy contracts that **will point** to the implementations. Since the implementation contracts are
          * not yet deployed, we give these proxies an empty contract as the initial implementation, to act as if they have no code.
          */
-        helloWorldServiceManagerProxy = HelloWorldServiceManager(
+        PlayAIServiceManagerProxy = PlayAIServiceManager(
             address(
                 new TransparentUpgradeableProxy(
                     address(emptyContract),
@@ -228,14 +228,14 @@ contract HelloWorldDeployer is Script, Utils {
                 address(stakeRegistryImplementation),
                 abi.encodeWithSelector(
                     ECDSAStakeRegistry.initialize.selector,
-                    address(helloWorldServiceManagerProxy),
+                    address(PlayAIServiceManagerProxy),
                     1,
                     quorum
                 )
             );
         }
 
-        helloWorldServiceManagerImplementation = new HelloWorldServiceManager(
+        PlayAIServiceManagerImplementation = new PlayAIServiceManager(
             address(avsDirectory),
             address(stakeRegistryProxy),
             address(delegationManager)
@@ -243,9 +243,9 @@ contract HelloWorldDeployer is Script, Utils {
         // Third, upgrade the proxy contracts to use the correct implementation contracts and initialize them.
         helloWorldProxyAdmin.upgrade(
             TransparentUpgradeableProxy(
-                payable(address(helloWorldServiceManagerProxy))
+                payable(address(PlayAIServiceManagerProxy))
             ),
-            address(helloWorldServiceManagerImplementation)
+            address(PlayAIServiceManagerImplementation)
         );
 
         // WRITE JSON DATA
@@ -264,13 +264,13 @@ contract HelloWorldDeployer is Script, Utils {
         );
         vm.serializeAddress(
             deployed_addresses,
-            "HelloWorldServiceManagerProxy",
-            address(helloWorldServiceManagerProxy)
+            "PlayAIServiceManagerProxy",
+            address(PlayAIServiceManagerProxy)
         );
         vm.serializeAddress(
             deployed_addresses,
-            "HelloWorldServiceManagerImplementation",
-            address(helloWorldServiceManagerImplementation)
+            "PlayAIServiceManagerImplementation",
+            address(PlayAIServiceManagerImplementation)
         );
         vm.serializeAddress(
             deployed_addresses,

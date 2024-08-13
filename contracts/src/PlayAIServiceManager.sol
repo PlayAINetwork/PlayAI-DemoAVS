@@ -8,31 +8,28 @@ import "@eigenlayer-middleware/src/unaudited/ECDSAStakeRegistry.sol";
 import "@openzeppelin-upgrades/contracts/utils/cryptography/ECDSAUpgradeable.sol";
 import "@eigenlayer/contracts/permissions/Pausable.sol";
 import {IRegistryCoordinator} from "@eigenlayer-middleware/src/interfaces/IRegistryCoordinator.sol";
-import "./IHelloWorldServiceManager.sol";
+import "./IPlayAIServiceManager.sol";
 
-/**
- * @title Primary entrypoint for procuring services from HelloWorld.
- * @author Eigen Labs, Inc.
- */
-contract HelloWorldServiceManager is 
+contract PlayAIServiceManager is 
     ECDSAServiceManagerBase,
-    IHelloWorldServiceManager,
+    IPlayAIServiceManager,
     Pausable
 {
     using BytesLib for bytes;
     using ECDSAUpgradeable for bytes32;
 
     /* STORAGE */
-    // The latest task index
     uint32 public latestTaskNum;
-
-    // mapping of task indices to all tasks hashes
-    // when a task is created, task hash is stored here,
-    // and responses need to pass the actual task,
-    // which is hashed onchain and checked against this mapping
-    mapping(uint32 => bytes32) public allTaskHashes;
-
-    // mapping of task indices to hash of abi.encode(taskResponse, taskResponseMetadata)
+    address public aggregrator;
+    uint256 public RequestNumber = 0;
+    enum RequestStatus { 
+        Unassigned,
+        Created, 
+        Executed, 
+        Cancelled
+    }
+    mapping(bytes32 => RequestStatus) public requests;
+    mapping(bytes32 => address) public requestOperators;
     mapping(address => mapping(uint32 => bytes)) public allTaskResponses;
 
     /* MODIFIERS */
@@ -43,6 +40,11 @@ contract HelloWorldServiceManager is
             true, 
             "Operator must be the caller"
         );
+        _;
+    }
+
+    modifier onlyAggregator(){
+        require(msg.sender == aggregrator,"Only Aggregator");
         _;
     }
 
@@ -61,25 +63,23 @@ contract HelloWorldServiceManager is
 
 
     /* FUNCTIONS */
-    // NOTE: this function creates new task, assigns it a taskId
+    // Add a check later so only aggregator can add tasks 
     function createNewTask(
-        string memory name
+        address operatorID,
+        string memory encryptedTaskData
     ) external {
-        // create a new task struct
-        Task memory newTask;
-        newTask.name = name;
-        newTask.taskCreatedBlock = uint32(block.number);
-
-        // store hash of task onchain, emit event, and increase taskNum
-        allTaskHashes[latestTaskNum] = keccak256(abi.encode(newTask));
-        emit NewTaskCreated(latestTaskNum, newTask);
-        latestTaskNum = latestTaskNum + 1;
+        RequestNumber++;
+        bytes32 requestID = keccak256(abi.encodePacked(operatorID, encryptedTaskData, block.timestamp,RequestNumber));
+        require(requests[requestID]==RequestStatus.Unassigned,"Request is already created");
+        requests[requestID]=RequestStatus.Created;
+        requestOperators[requestID] = operatorID;
+        emit RequestCreated(operatorID,requestID,encryptedTaskData);
     }
 
     // NOTE: this function responds to existing tasks.
     function respondToTask(
-        Task calldata task,
-        uint32 referenceTaskIndex,
+        bytes32 requestID,
+        string memory encryptedTaskResponse,
         bytes calldata signature
     ) external onlyOperator {
         require(
@@ -88,30 +88,29 @@ contract HelloWorldServiceManager is
         );
         // check that the task is valid, hasn't been responsed yet, and is being responded in time
         require(
-            keccak256(abi.encode(task)) ==
-                allTaskHashes[referenceTaskIndex],
-            "supplied task does not match the one recorded in the contract"
+            requests[requestID]==RequestStatus.Created,
+            "Request doesn't exist or already executed"
         );
-        // some logical checks
         require(
-            allTaskResponses[msg.sender][referenceTaskIndex].length == 0,
-            "Operator has already responded to the task"
+            requestOperators[requestID] == msg.sender,
+            "Only the assigned operator can respond"
         );
-
         // The message that was signed
-        bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", task.name));
-        bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
+        bytes32 ethSignedMessageHash = requestID.toEthSignedMessageHash();
 
         // Recover the signer address from the signature
         address signer = ethSignedMessageHash.recover(signature);
 
         require(signer == msg.sender, "Message signer is not operator");
-
-        // updating the storage with task responses
-        allTaskResponses[msg.sender][referenceTaskIndex] = signature;
+        requests[requestID]=RequestStatus.Executed;
 
         // emitting event
-        emit TaskResponded(referenceTaskIndex, task, msg.sender);
+        emit RequestExecuted(requestID, signer, encryptedTaskResponse);
+    }
+
+    // Function is public to set aggregator should be secured later
+    function initAggregator(address _aggregrator) external {
+        aggregrator = _aggregrator;
     }
 
     // HELPER

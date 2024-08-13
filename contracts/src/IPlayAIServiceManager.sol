@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-interface IHelloWorldServiceManager {
+interface IPlayAIServiceManager {
     // EVENTS
-    event NewTaskCreated(uint32 indexed taskIndex, Task task);
-
-    event TaskResponded(uint32 indexed taskIndex, Task task, address operator);
+    event RequestCreated(address operatorID, bytes32 requestID, string encryptedTaskData);
+    event RequestExecuted(bytes32 requestID, address operatorID,string taskResponse);
 
     // STRUCTS
     struct Task {
@@ -16,13 +15,14 @@ interface IHelloWorldServiceManager {
     // FUNCTIONS
     // NOTE: this function creates new task.
     function createNewTask(
-        string memory name
+        address operatorID,
+        string memory encryptedTaskData
     ) external;
 
     // NOTE: this function is called by operators to respond to a task.
     function respondToTask(
-        Task calldata task,
-        uint32 referenceTaskIndex,
+        bytes32 requestID,
+        string memory encryptedTaskResponse,
         bytes calldata signature
     ) external;
 }

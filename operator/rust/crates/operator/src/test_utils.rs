@@ -13,7 +13,7 @@ use rand::Rng;
 use rand::RngCore;
 use reqwest::Url;
 use tokio::time::{self, Duration};
-use HelloWorldServiceManager::Task;
+use PlayAIServiceManager::Task;
 
 use alloy_primitives::{eip191_hash_message, Address, FixedBytes, U256};
 use alloy_signer::Signer;
@@ -30,8 +30,8 @@ use ECDSAStakeRegistry::SignatureWithSaltAndExpiry;
 sol!(
     #[allow(missing_docs)]
     #[sol(rpc)]
-    HelloWorldServiceManager,
-    "json_abi/HelloWorldServiceManager.json"
+    PlayAIServiceManager,
+    "json_abi/PlayAIServiceManager.json"
 );
 
 use eigen_utils::binding::ECDSAStakeRegistry;
@@ -81,7 +81,7 @@ async fn sign_and_response_to_task(
     let hello_world_contract_address = Address::from_str(&HELLO_WORLD_CONTRACT_ADDRESS)
         .expect("wrong hello world contract address");
     let hello_world_contract =
-        HelloWorldServiceManager::new(hello_world_contract_address, &provider);
+        PlayAIServiceManager::new(hello_world_contract_address, &provider);
 
     hello_world_contract
         .respondToTask(
@@ -113,7 +113,7 @@ pub async fn monitor_new_tasks() -> Result<()> {
         .expect("wrong hello world contract address");
 
     let hello_world_contract =
-        HelloWorldServiceManager::new(hello_world_contract_address, &provider);
+        PlayAIServiceManager::new(hello_world_contract_address, &provider);
     let word: &str = "EigenWorld";
     let _new_task_tx = hello_world_contract
         .createNewTask(word.to_owned())
@@ -137,8 +137,8 @@ pub async fn monitor_new_tasks() -> Result<()> {
 
         for log in logs {
             match log.topic0() {
-                Some(&HelloWorldServiceManager::NewTaskCreated::SIGNATURE_HASH) => {
-                    let HelloWorldServiceManager::NewTaskCreated { taskIndex, task } = log
+                Some(&PlayAIServiceManager::NewTaskCreated::SIGNATURE_HASH) => {
+                    let PlayAIServiceManager::NewTaskCreated { taskIndex, task } = log
                         .log_decode()
                         .expect("Failed to decode log new task created")
                         .inner
@@ -267,7 +267,7 @@ async fn create_new_task(task_name: &str) -> Result<()> {
 
     let provider = get_provider_with_wallet(KEY.clone());
     let hello_world_contract =
-        HelloWorldServiceManager::new(hello_world_contract_address, provider);
+        PlayAIServiceManager::new(hello_world_contract_address, provider);
 
     let tx = hello_world_contract
         .createNewTask(task_name.to_string())
@@ -325,7 +325,7 @@ mod tests {
     use super::*;
     use dotenv::dotenv;
     use eigen_utils::binding::DelegationManager::{self, isOperatorReturn};
-    use HelloWorldServiceManager::latestTaskNumReturn;
+    use PlayAIServiceManager::latestTaskNumReturn;
     #[tokio::test]
     async fn test_register_operator() {
         dotenv().ok();
@@ -365,7 +365,7 @@ mod tests {
         let hello_world_contract_address = Address::from_str(&HELLO_WORLD_CONTRACT_ADDRESS)
             .expect("wrong hello world contract address");
         let hello_world_contract =
-            HelloWorldServiceManager::new(hello_world_contract_address, &provider);
+            PlayAIServiceManager::new(hello_world_contract_address, &provider);
 
         let latest_task_num = hello_world_contract.latestTaskNum().call().await.unwrap();
 

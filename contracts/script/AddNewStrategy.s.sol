@@ -14,7 +14,7 @@ import "@eigenlayer/test/mocks/EmptyContract.sol";
 import {ECDSAStakeRegistry} from "@eigenlayer-middleware/src/unaudited/ECDSAStakeRegistry.sol";
 import {Quorum, StrategyParams} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
 import "@eigenlayer-middleware/src/OperatorStateRetriever.sol";
-import {HelloWorldServiceManager, IServiceManager} from "../src/HelloWorldServiceManager.sol";
+import {PlayAIServiceManager, IServiceManager} from "../src/PlayAIServiceManager.sol";
 import "../src/ERC20Mock.sol";
 import {Utils} from "./utils/Utils.sol";
 import "forge-std/Script.sol";
@@ -30,7 +30,7 @@ contract AddStrategyScript is Script, Utils {
     address strategyManagerAddr;
     address delegationManagerAddr;
     address avsDirectoryAddr;
-    address helloWorldServiceManagerProxyAddr;
+    address PlayAIServiceManagerProxyAddr;
     address stakeRegistryProxyAddr;
 
     function run() external {
@@ -78,7 +78,7 @@ contract AddStrategyScript is Script, Utils {
     function _updateHelloWorldAVS(StrategyBaseTVLLimits erc20MockStrategy) internal {
         IDelegationManager delegationManager = IDelegationManager(delegationManagerAddr);
         IAVSDirectory avsDirectory = IAVSDirectory(avsDirectoryAddr);
-        HelloWorldServiceManager helloWorldServiceManagerProxy = HelloWorldServiceManager(helloWorldServiceManagerProxyAddr);
+        PlayAIServiceManager PlayAIServiceManagerProxy = PlayAIServiceManager(PlayAIServiceManagerProxyAddr);
         ECDSAStakeRegistry stakeRegistryProxy = ECDSAStakeRegistry(stakeRegistryProxyAddr);
 
         StrategyParams memory strategyParams = StrategyParams({
@@ -94,7 +94,7 @@ contract AddStrategyScript is Script, Utils {
         });
 
         stakeRegistryProxy.initialize(
-            address(helloWorldServiceManagerProxy),
+            address(PlayAIServiceManagerProxy),
             1,
             quorum
         );
